@@ -857,6 +857,8 @@
     pinkActive: false,
     audioCtx: null,
     stream: null,
+    sourceNode: null,
+    zeroGain: null,
     analyser: null,
     timeBuf: null,
     freqBuf: null,
@@ -935,6 +937,9 @@
     tipsBox: $('tipsBox'),
     rngPinkVol: $('rngPinkVol'),
     pinkVolLabel: $('pinkVolLabel'),
+    modeGroup: $('modeGroup'),
+    durGroup: $('durGroup'),
+    cmpGroup: $('cmpGroup'),
     btnDetect: $('btnDetect'),
     progressTrack: $('progressTrack'),
     progressBar: $('progressBar'),
@@ -1158,7 +1163,7 @@
     dom.clipBanner.classList.remove('show');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('이 브라우저에서는 마이크 API를 사용할 수 없습니다. HTTPS(GitHub Pages 등) 주소에서 크롬으로 접속해 주세요.');
+      alert(`현재 접속 방식(${location.protocol})에서는 브라우저 보안 정책상 마이크 API가 차단됩니다.\nGitHub Pages(https://) 또는 localhost 주소에서 크롬으로 접속해 주세요.`);
       return;
     }
 
@@ -1181,8 +1186,8 @@
       ? [{ name: 'COMPAT', constraints: { audio: true } }]
       : [
           ...(preferredId ? [{ name: 'RAW-USB', constraints: { audio: { deviceId: { exact: preferredId }, ...rawFlags } } }] : []),
+          ...(preferredId ? [{ name: 'CLEAN-USB', constraints: { audio: { deviceId: { ideal: preferredId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } } }] : []),
           { name: 'RAW-DEF', constraints: { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } } },
-          ...(preferredId ? [{ name: 'CLEAN-USB', constraints: { audio: { deviceId: { ideal: preferredId }, echoCancellation: false, autoGainControl: false } } }] : []),
           { name: 'COMPAT', constraints: { audio: true } }
         ];
 
@@ -1214,9 +1219,15 @@
       const analyser = state.audioCtx.createAnalyser();
       analyser.fftSize = 16384;
       analyser.smoothingTimeConstant = 0; // We do our own linear-power EMA
+      const zeroGain = state.audioCtx.createGain();
+      zeroGain.gain.value = 0;
       src.connect(analyser);
+      analyser.connect(zeroGain);
+      zeroGain.connect(state.audioCtx.destination);
 
       state.stream = stream;
+      state.sourceNode = src;
+      state.zeroGain = zeroGain;
       state.analyser = analyser;
       state.timeBuf = new Float32Array(analyser.fftSize);
       state.freqBuf = new Float32Array(analyser.frequencyBinCount);
@@ -1247,11 +1258,22 @@
   }
 
   function stopMic(resetUi = true) {
+    if (state.sourceNode) {
+      try { state.sourceNode.disconnect(); } catch (_) {}
+      state.sourceNode = null;
+    }
+    if (state.analyser) {
+      try { state.analyser.disconnect(); } catch (_) {}
+      state.analyser = null;
+    }
+    if (state.zeroGain) {
+      try { state.zeroGain.disconnect(); } catch (_) {}
+      state.zeroGain = null;
+    }
     if (state.stream) {
       state.stream.getTracks().forEach(t => t.stop());
       state.stream = null;
     }
-    state.analyser = null;
     state.micActive = false;
     state.silenceSince = null;
     dom.watchdogBanner.classList.remove('show');
@@ -1521,14 +1543,14 @@
     dom.progressBar.style.width = '0%';
   }
 
-  function stepCapture(now) {
+  function stepCapture() {
     if (!state.capturing) return;
     for (let i = 0; i < BAND_COUNT; i++) {
       state.capAccumPower[i] += Math.pow(10, state.liveDb[i] / 10);
     }
     state.capFrames++;
 
-    const elapsed = now - state.capStart;
+    const elapsed = Math.max(0, performance.now() - state.capStart);
     const pct = Math.min(100, (elapsed / state.durationMs) * 100);
     dom.progressBar.style.width = pct.toFixed(1) + '%';
     const rem = Math.max(0, (state.durationMs - elapsed) / 1000).toFixed(1);
@@ -2165,7 +2187,7 @@
       computeDemoFrame(now / 1000);
     }
     if (state.capturing) {
-      stepCapture(now);
+      stepCapture();
     }
     drawCharts();
     requestAnimationFrame(loop);
@@ -2292,6 +2314,11 @@
 
   // Big Detect button: when clicking after a previous comparison, promote latest currId to refId if compareTarget === 'prev'
   dom.btnDetect.onclick = () => {
+    if (!state.micActive && !state.demoActive) {
+      alert('먼저 상단의 [🎤 iMM-6C 시작] 또는 [🎮 데모 모드]를 켜 주세요.');
+      return;
+    }
+    if (state.capturing) return;
     if (state.compareTarget === 'prev' && state.currId) {
       state.refId = state.currId;
       state.currId = null;
