@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0f17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="HELIX 위상" />
+  <link rel="icon" type="image/png" href="./icon.png" />
+  <link rel="apple-touch-icon" href="./icon.png" />
+  <title>HELIX DSP MINI 위상 감지기 (iMM-6C Edition)</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --bg-card: #121826;
+      --bg-card2: #182032;
+      --border: #263149;
+      --text: #e6edf7;
+      --muted: #8b9bb8;
+      --cyan: #22d3ee;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+    .app {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 12px 12px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #121a2d 0%, #0f1523 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #06b6d4, #10b981);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 18px;
+      color: #061018;
+      box-shadow: 0 0 16px rgba(34, 211, 238, 0.35);
+      flex-shrink: 0;
+    }
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand .sub {
+      font-size: 11px;
+      color: var(--cyan);
+      font-weight: 600;
+    }
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #0891b2, #0284c7);
+      border-color: #22d3ee;
+      color: #fff;
+    }
+    .btn-active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald);
+      color: #6ee7b7;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    }
+    .btn-amber {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: var(--amber);
+      color: #fcd34d;
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: var(--red);
+      color: #fca5a5;
+    }
+    .btn-sm { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
+
+    /* Status Strip */
+    .status-strip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .status-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: #0d1320;
+      color: var(--muted);
+    }
+    .pill.ok { border-color: rgba(16,185,129,0.5); color: #6ee7b7; background: rgba(16,185,129,0.12); }
+    .pill.warn { border-color: rgba(245,158,11,0.5); color: #fcd34d; background: rgba(245,158,11,0.12); }
+    .pill.err { border-color: rgba(239,68,68,0.6); color: #fca5a5; background: rgba(239,68,68,0.15); }
+    .pill.info { border-color: rgba(34,211,238,0.5); color: #67e8f9; background: rgba(34,211,238,0.12); }
+
+    .adc-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 240px;
+      flex: 1;
+      max-width: 380px;
+    }
+    .adc-label { font-size: 11px; color: var(--muted); white-space: nowrap; font-weight: 700; }
+    .adc-bar-bg {
+      position: relative;
+      flex: 1;
+      height: 12px;
+      background: #080c14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .adc-optimal {
+      position: absolute;
+      left: 40%;
+      width: 50%;
+      top: 0;
+      bottom: 0;
+      background: rgba(16, 185, 129, 0.14);
+      border-left: 1px dashed rgba(16, 185, 129, 0.45);
+      border-right: 1px dashed rgba(245, 158, 11, 0.55);
+    }
+    .adc-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #22d3ee 0%, #10b981 65%, #f59e0b 88%, #ef4444 100%);
+      transition: width 0.06s linear;
+    }
+    .adc-val {
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      width: 68px;
+      text-align: right;
+      color: var(--text);
+    }
+
+    /* Banners */
+    .alert-banner {
+      display: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .alert-banner.show { display: flex; }
+    .alert-banner.watchdog {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      color: #fecaca;
+    }
+    .alert-banner.demo {
+      background: rgba(168, 85, 247, 0.14);
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      color: #e9d5ff;
+    }
+    .demo-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Audio Settings Drawer */
+    .drawer {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      gap: 14px;
+      flex-direction: column;
+    }
+    .drawer.open { display: flex; }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    .setting-box {
+      background: #0e1422;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .setting-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--cyan);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    select, input[type="range"] {
+      width: 100%;
+    }
+    select {
+      background: var(--bg-card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 12.5px;
+    }
+    .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .tips-box {
+      display: none;
+      background: rgba(34, 211, 238, 0.08);
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #cffafe;
+    }
+    .tips-box.open { display: block; }
+    .tips-box ul { padding-left: 18px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+
+    /* Control Card (Presets + Mode + Big Detect Button) */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .preset-btn {
+      flex: 1 1 135px;
+      padding: 8px 10px;
+      flex-direction: column;
+      gap: 2px;
+      background: #0e1422;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .preset-btn .p-name { font-size: 12.5px; font-weight: 800; }
+    .preset-btn .p-range { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+    .preset-btn.active {
+      background: rgba(34, 211, 238, 0.15);
+      border-color: var(--cyan);
+      color: #ecfeff;
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+    }
+    .preset-btn.active .p-range { color: #67e8f9; }
+
+    .options-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      background: #0e1422;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .seg-group {
+      display: inline-flex;
+      background: #080c14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 9px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .seg-btn.active {
+      background: var(--bg-card2);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.45);
+    }
+
+    /* Big Detect Button */
+    .detect-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .detect-btn {
+      width: 100%;
+      padding: 16px 18px;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+      border: 1px solid #34d399;
+      color: #ffffff;
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+    .detect-btn.capturing {
+      background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+      border-color: #fbbf24;
+      box-shadow: 0 6px 22px rgba(245, 158, 11, 0.35);
+    }
+    .progress-track {
+      height: 6px;
+      width: 100%;
+      background: #080c14;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-track.show { display: block; }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22d3ee, #10b981);
+      transition: width 0.08s linear;
+    }
+
+    /* Verdict HUD */
+    .verdict-card {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .verdict-card.v-best {
+      border-color: #10b981;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.16), var(--bg-card));
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.22);
+    }
+    .verdict-card.v-good {
+      border-color: #34d399;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.10), var(--bg-card));
+    }
+    .verdict-card.v-neutral {
+      border-color: #38bdf8;
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), var(--bg-card));
+    }
+    .verdict-card.v-warn {
+      border-color: #f59e0b;
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.12), var(--bg-card));
+    }
+    .verdict-card.v-bad {
+      border-color: #ef4444;
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.16), var(--bg-card));
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+    }
+    .verdict-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .verdict-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+    .verdict-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .metric-box {
+      background: rgba(8, 12, 20, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .metric-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .metric-value {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 2px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .guide-line {
+      background: rgba(15, 23, 42, 0.85);
+      border-left: 3px solid var(--cyan);
+      padding: 8px 10px;
+      border-radius: 0 8px 8px 0;
+      font-size: 12.5px;
+      color: #dbeafe;
+    }
+
+    /* Charts */
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      position: relative;
+    }
+    .chart-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .dot { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+    .canvas-stack {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      touch-action: pan-y;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      background: #080c14;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+    }
+    #rtaCanvas { height: 270px; }
+    #diffCanvas { height: 135px; }
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      display: none;
+      background: rgba(11, 15, 23, 0.94);
+      border: 1px solid var(--cyan);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 11.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--text);
+      z-index: 20;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+      min-width: 155px;
+    }
+
+    /* History */
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .history-item {
+      background: #0e1422;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .history-item.is-ref { border-color: var(--cyan); background: rgba(34, 211, 238, 0.08); }
+    .history-item.is-best { box-shadow: inset 3px 0 0 var(--emerald); }
+    .h-meta { display: flex; flex-direction: column; gap: 3px; }
+    .h-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: 800; font-size: 13px; }
+    .h-stats { font-size: 11.5px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .h-actions { display: flex; gap: 6px; }
+    .empty-msg { text-align: center; color: var(--muted); padding: 18px 8px; font-size: 12.5px; }
+
+    @media (max-width: 600px) {
+      #rtaCanvas { height: 225px; }
+      #diffCanvas { height: 115px; }
+      .brand h1 { font-size: 15px; }
+      .detect-btn { font-size: 16px; padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-badge">Φ</div>
+      <div>
+        <h1>HELIX DSP MINI 위상 감지기</h1>
+        <div class="sub">Dayton Audio iMM-6C Edition · 1/6-Octave RTA</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="btnMic" class="btn-primary">🎤 iMM-6C 시작</button>
+      <button id="btnPink">🔊 핑크노이즈</button>
+      <button id="btnSettings">⚙️ 설정</button>
+      <button id="btnDemo">🎮 데모 모드</button>
+    </div>
+  </header>
+
+  <!-- iMM-6C Status Strip -->
+  <section class="status-strip">
+    <div class="status-left">
+      <span id="pillConn" class="pill">⚪ 마이크 대기 중</span>
+      <span id="pillDev" class="pill">장치: 미연결</span>
+      <span id="pillRate" class="pill">SR: -</span>
+      <span id="pillHal" class="pill">HAL: -</span>
+      <span id="pillCal" class="pill">보정: OFF</span>
+    </div>
+    <div class="adc-wrap">
+      <span class="adc-label">ADC 피크</span>
+      <div class="adc-bar-bg">
+        <div class="adc-optimal" title="적정 구간 -36 ~ -6 dBFS"></div>
+        <div id="adcFill" class="adc-fill"></div>
+      </div>
+      <span id="adcVal" class="adc-val">-∞ dBFS</span>
+    </div>
+  </section>
+
+  <!-- Silence Watchdog / Clipping Banner -->
+  <div id="clipBanner" class="alert-banner watchdog">
+    <span>🚨 <strong>ADC 클리핑 감지!</strong> 입력 신호가 -1 dBFS를 초과했습니다. 차량 헤드유닛 볼륨을 낮추세요.</span>
+  </div>
+  <div id="watchdogBanner" class="alert-banner watchdog">
+    <span>⚠️ <strong>1.8초 이상 무음 감지:</strong> 안드로이드 USB-C 오디오 충돌일 수 있습니다. 블루투스를 끄고 iMM-6C 커넥터를 180° 반전 재연결하거나 호환 모드로 재시도하세요.</span>
+    <button id="btnRetryCompat" class="btn-sm btn-danger">🔄 호환 모드로 재시도</button>
+  </div>
+
+  <!-- Demo Banner -->
+  <div id="demoBanner" class="alert-banner demo">
+    <span>🎮 <strong>물리 시뮬레이션 데모 활성:</strong> 시나리오를 바꾼 뒤 <strong>[🎯 위상 감지]</strong>를 눌러 판정을 테스트하세요.</span>
+    <div class="demo-btns">
+      <button id="demoInit" class="btn-sm btn-active">초기 (위상 어긋남)</button>
+      <button id="demoGood" class="btn-sm">✅ 위상 보강</button>
+      <button id="demoBad" class="btn-sm">❌ 위상 상쇄</button>
+    </div>
+  </div>
+
+  <!-- Collapsible Audio Settings -->
+  <section id="settingsDrawer" class="drawer">
+    <div class="settings-grid">
+      <div class="setting-box">
+        <div class="setting-title">
+          <span>🎙️ 마이크 장치 & 입력 트림</span>
+          <button id="btnRefreshDev" class="btn-sm">새로고침</button>
+        </div>
+        <select id="selDevice"><option value="">자동 감지 (iMM-6C 우선)</option></select>
+        <div class="row" style="justify-content:space-between; font-size:12px;">
+          <span>소프트웨어 트림 (표시용)</span>
+          <strong id="trimLabel">0.0 dB</strong>
+        </div>
+        <input id="rngTrim" type="range" min="-24" max="12" step="0.5" value="0" />
+        <div class="row">
+          <button class="btn-sm trim-quick" data-trim="-12">-12 dB</button>
+          <button class="btn-sm trim-quick" data-trim="-6">-6 dB</button>
+          <button class="btn-sm trim-quick" data-trim="0">0 dB</button>
+          <button class="btn-sm trim-quick" data-trim="6">+6 dB</button>
+        </div>
+      </div>
+
+      <div class="setting-box">
+        <div class="setting-title">
+          <span>📄 iMM-6C 보정 파일 (.txt / .cal)</span>
+          <button id="btnTips" class="btn-sm">💡 사용 팁</button>
+        </div>
+        <div class="row">
+          <input id="fileCal" type="file" accept=".txt,.cal,text/plain" style="display:none" />
+          <button id="btnLoadCal" class="btn-sm btn-primary">파일 불러오기</button>
+          <button id="btnToggleCal" class="btn-sm" disabled>보정: OFF</button>
+          <button id="btnToggleCalOverlay" class="btn-sm" disabled>곡선 표시</button>
+          <button id="btnClearCal" class="btn-sm btn-danger" disabled>삭제</button>
+        </div>
+        <div id="calInfo" style="font-size:11.5px; color:var(--muted);">저장된 보정 파일 없음 (localStorage 자동 영구 저장 지원)</div>
+      </div>
+
+      <div class="setting-box">
+        <div class="setting-title">
+          <span>🔊 내장 핑크노이즈 출력</span>
+          <span id="pinkVolLabel" style="color:var(--muted);">35%</span>
+        </div>
+        <input id="rngPinkVol" type="range" min="0.05" max="0.9" step="0.05" value="0.35" />
+        <div style="font-size:11.5px; color:var(--muted);">
+          차량 블루투스/유선 연결 후 헤드유닛 핑크노이즈 트랙 재생이 가장 정확하며, 필요 시 내장 발생기를 보조로 사용하세요.
+        </div>
+      </div>
+    </div>
+
+    <div id="tipsBox" class="tips-box">
+      <strong>💡 Dayton Audio iMM-6C 실차 측정 체크리스트</strong>
+      <ul>
+        <li>측정 전 스마트폰 <strong>블루투스 통화/미디어 연결을 확인</strong>하세요. HFP 통화 모드가 켜지면 안드로이드가 USB 마이크를 무시하고 8kHz 저음질로 전환할 수 있습니다.</li>
+        <li>마이크는 운전석 귀 위치에서 <strong>전면 유리 중앙 또는 천장(90° 보정파일 기준)</strong>을 향하게 고정하고, 측정 중 자세를 바꾸지 마세요.</li>
+        <li>상단 <strong>ADC 피크 미터가 -36 ~ -6 dBFS(초록 구간)</strong>에 오도록 차량 볼륨을 맞추면 왜곡 없이 가장 높은 정밀도를 얻습니다.</li>
+        <li>Dayton 공식 사이트에서 시리얼 번호로 받은 <code>.txt</code> 파일을 한 번만 불러오면 브라우저에 영구 저장됩니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Presets + Mode + Detect Button -->
+  <section class="card">
+    <div class="preset-row" id="presetRow">
+      <button class="preset-btn active" data-preset="TW_MID">
+        <span class="p-name">트위터 ↔ 미드</span>
+        <span class="p-range">2.5 ~ 5 kHz</span>
+      </button>
+      <button class="preset-btn" data-preset="MID_SUB">
+        <span class="p-name">미드 ↔ 서브</span>
+        <span class="p-range">50 ~ 110 Hz</span>
+      </button>
+      <button class="preset-btn" data-preset="TW_LR">
+        <span class="p-name">트위터 좌 ↔ 우</span>
+        <span class="p-range">2 ~ 10 kHz</span>
+      </button>
+      <button class="preset-btn" data-preset="MID_LR">
+        <span class="p-name">미드 좌 ↔ 우</span>
+        <span class="p-range">150 Hz ~ 2 kHz</span>
+      </button>
+      <button class="preset-btn" data-preset="FULL">
+        <span class="p-name">전체 대역</span>
+        <span class="p-range">40 Hz ~ 16 kHz</span>
+      </button>
+    </div>
+
+    <div class="options-bar">
+      <div class="row">
+        <span style="font-size:11.5px; color:var(--muted); font-weight:700;">판정 모드</span>
+        <div class="seg-group" id="modeGroup">
+          <button class="seg-btn active" data-mode="boost">📈 정위상 보강</button>
+          <button class="seg-btn" data-mode="null">🕳️ 역상 딥 탐색</button>
+        </div>
+      </div>
+      <div class="row">
+        <span style="font-size:11.5px; color:var(--muted); font-weight:700;">평균 시간</span>
+        <div class="seg-group" id="durGroup">
+          <button class="seg-btn" data-dur="2000">2초</button>
+          <button class="seg-btn active" data-dur="3000">3초</button>
+          <button class="seg-btn" data-dur="5000">5초</button>
+        </div>
+      </div>
+      <div class="row">
+        <span style="font-size:11.5px; color:var(--muted); font-weight:700;">비교 대상</span>
+        <div class="seg-group" id="cmpGroup">
+          <button class="seg-btn active" data-cmp="prev">직전 값</button>
+          <button class="seg-btn" data-cmp="best">역대 BEST</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detect-area">
+      <button id="btnDetect" class="detect-btn">🎯 첫 기준 위상 감지 (3초 평균)</button>
+      <div id="progressTrack" class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+    </div>
+  </section>
+
+  <!-- Verdict HUD -->
+  <section id="verdictCard" class="verdict-card">
+    <div class="verdict-top">
+      <div>
+        <div id="verdictTitle" class="verdict-title">🎙️ 기준 측정을 대기 중입니다</div>
+        <div id="verdictSub" class="verdict-sub">핑크노이즈를 재생한 뒤 [🎯 첫 기준 위상 감지]를 눌러 초기 기준선을 저장하세요.</div>
+      </div>
+      <button id="btnDiscard" class="btn-sm" style="display:none;">↩️ 이번 측정 무시 (이전 기준 유지)</button>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-box">
+        <div class="metric-label">타겟 대역 평균 ΔdB</div>
+        <div id="mDelta" class="metric-value">-</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">최대 변화 주파수</div>
+        <div id="mPeakFreq" class="metric-value">-</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">대역 평탄도 (SD)</div>
+        <div id="mFlatness" class="metric-value">-</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">대역 외 볼륨 안정도</div>
+        <div id="mDrift" class="metric-value">-</div>
+      </div>
+    </div>
+    <div id="guideLine" class="guide-line">
+      <strong>튜닝 가이드:</strong> ① 기준 측정 → ② HELIX DSP PC-Tool에서 극성/위상/TA 1단계 조정 → ③ 다시 [🎯 위상 감지]를 누르면 이전 값 대비 위상 정합 여부를 자동 판정합니다.
+    </div>
+  </section>
+
+  <!-- Dual Aligned Charts -->
+  <section class="chart-card">
+    <div class="chart-header">
+      <strong style="font-size:13.5px;">📊 실시간 1/6-Octave RTA & ΔdB 비교 그래프</strong>
+      <div class="legend">
+        <span class="legend-item"><i class="dot" style="background:#f59e0b"></i>실시간</span>
+        <span class="legend-item"><i class="dot" style="background:#22d3ee"></i>이전 기준</span>
+        <span class="legend-item"><i class="dot" style="background:#10b981"></i>현재 감지</span>
+        <span class="legend-item" id="legCal" style="display:none;"><i class="dot" style="background:#a855f7"></i>iMM-6C 보정</span>
+      </div>
+    </div>
+    <div class="canvas-stack" id="canvasStack">
+      <canvas id="rtaCanvas"></canvas>
+      <canvas id="diffCanvas"></canvas>
+      <div id="tooltip" class="tooltip"></div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="card">
+    <div class="history-header">
+      <strong style="font-size:14px;">🗂️ 측정 이력 (<span id="histCount">0</span>)</strong>
+      <div class="row">
+        <input id="fileImport" type="file" accept=".json,application/json" style="display:none" />
+        <button id="btnExport" class="btn-sm">💾 JSON 저장</button>
+        <button id="btnImport" class="btn-sm">📂 불러오기</button>
+        <button id="btnClearHist" class="btn-sm btn-danger">🗑️ 초기화</button>
+      </div>
+    </div>
+    <div id="historyList" class="history-list">
+      <div class="empty-msg">아직 저장된 측정 이력이 없습니다.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* =========================================================
+     1. 61-Band 1/6-Octave Frequency Grid (20 Hz ~ 20 kHz)
+     ========================================================= */
+  const BAND_COUNT = 61;
+  const BANDS = [];
+  const BAND_EDGES = [];
+  const F_MIN = 20;
+  const F_MAX = 20000;
+  const OCT_STEP = 1 / 6;
+  const HALF_STEP = Math.pow(2, OCT_STEP / 2);
+
+  for (let i = 0; i < BAND_COUNT; i++) {
+    const fc = 20 * Math.pow(2, i * OCT_STEP);
+    BANDS.push(fc);
+    BAND_EDGES.push([fc / HALF_STEP, fc * HALF_STEP]);
+  }
+
+  const PRESETS = {
+    TW_MID:  { id: 'TW_MID',  label: 'TW↔MID',  name: '트위터 ↔ 미드',   low: 2500, high: 5000  },
+    MID_SUB: { id: 'MID_SUB', label: 'MID↔SUB', name: '미드 ↔ 서브',     low: 50,   high: 110   },
+    TW_LR:   { id: 'TW_LR',   label: 'TW L↔R',  name: '트위터 좌 ↔ 우',  low: 2000, high: 10000 },
+    MID_LR:  { id: 'MID_LR',  label: 'MID L↔R', name: '미드 좌 ↔ 우',    low: 150,  high: 2000  },
+    FULL:    { id: 'FULL',    label: 'FULL',    name: '전체 대역',       low: 40,   high: 16000 }
+  };
+
+  /* =========================================================
+     2. Application State
+     ========================================================= */
+  const state = {
+    preset: 'TW_MID',
+    mode: 'boost',        // 'boost' | 'null'
+    durationMs: 3000,
+    compareTarget: 'prev',// 'prev' | 'best'
+    trimDb: 0,
+
+    // Audio
+    micActive: false,
+    demoActive: false,
+    demoScenario: 'init', // 'init' | 'good' | 'bad'
+    pinkActive: false,
+    audioCtx: null,
+    stream: null,
+    analyser: null,
+    timeBuf: null,
+    freqBuf: null,
+    sampleRate: 48000,
+    activeHal: '-',
+    activeDevLabel: '미연결',
+    isImm6c: false,
+    pinkNode: null,
+    pinkGain: null,
+    watchdogTimer: null,
+    silenceSince: null,
+    lastAdcPeakDb: -99,
+
+    // Calibration
+    calFileName: '',
+    calSensitivity: null,
+    calOffsets: null,     // Float32Array(61)
+    calEnabled: false,
+    calOverlay: false,
+
+    // Spectrum Data (dB)
+    liveDb: new Float32Array(BAND_COUNT).fill(-90),
+    emaPower: new Float32Array(BAND_COUNT).fill(1e-9),
+
+    // Capture
+    capturing: false,
+    capStart: 0,
+    capAccumPower: new Float64Array(BAND_COUNT),
+    capFrames: 0,
+
+    // History & Reference
+    history: [],          // { id, ts, preset, mode, bands:[], avgDb, sd, deltaDb, peakFreq, peakDelta, driftDb, verdictClass }
+    refId: null,
+    currId: null,
+    bestIdByPreset: {},
+
+    // Hover
+    hoverBand: -1
+  };
+
+  /* =========================================================
+     3. DOM Elements
+     ========================================================= */
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    btnMic: $('btnMic'),
+    btnPink: $('btnPink'),
+    btnSettings: $('btnSettings'),
+    btnDemo: $('btnDemo'),
+    pillConn: $('pillConn'),
+    pillDev: $('pillDev'),
+    pillRate: $('pillRate'),
+    pillHal: $('pillHal'),
+    pillCal: $('pillCal'),
+    adcFill: $('adcFill'),
+    adcVal: $('adcVal'),
+    clipBanner: $('clipBanner'),
+    watchdogBanner: $('watchdogBanner'),
+    btnRetryCompat: $('btnRetryCompat'),
+    demoBanner: $('demoBanner'),
+    demoInit: $('demoInit'),
+    demoGood: $('demoGood'),
+    demoBad: $('demoBad'),
+    settingsDrawer: $('settingsDrawer'),
+    selDevice: $('selDevice'),
+    btnRefreshDev: $('btnRefreshDev'),
+    rngTrim: $('rngTrim'),
+    trimLabel: $('trimLabel'),
+    fileCal: $('fileCal'),
+    btnLoadCal: $('btnLoadCal'),
+    btnToggleCal: $('btnToggleCal'),
+    btnToggleCalOverlay: $('btnToggleCalOverlay'),
+    btnClearCal: $('btnClearCal'),
+    calInfo: $('calInfo'),
+    btnTips: $('btnTips'),
+    tipsBox: $('tipsBox'),
+    rngPinkVol: $('rngPinkVol'),
+    pinkVolLabel: $('pinkVolLabel'),
+    btnDetect: $('btnDetect'),
+    progressTrack: $('progressTrack'),
+    progressBar: $('progressBar'),
+    verdictCard: $('verdictCard'),
+    verdictTitle: $('verdictTitle'),
+    verdictSub: $('verdictSub'),
+    btnDiscard: $('btnDiscard'),
+    mDelta: $('mDelta'),
+    mPeakFreq: $('mPeakFreq'),
+    mFlatness: $('mFlatness'),
+    mDrift: $('mDrift'),
+    guideLine: $('guideLine'),
+    rtaCanvas: $('rtaCanvas'),
+    diffCanvas: $('diffCanvas'),
+    canvasStack: $('canvasStack'),
+    tooltip: $('tooltip'),
+    legCal: $('legCal'),
+    histCount: $('histCount'),
+    historyList: $('historyList'),
+    btnExport: $('btnExport'),
+    btnImport: $('btnImport'),
+    fileImport: $('fileImport'),
+    btnClearHist: $('btnClearHist')
+  };
+
+  /* =========================================================
+     4. Helpers
+     ========================================================= */
+  function fmtFreq(f) {
+    if (f >= 1000) return (f / 1000).toFixed(f >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'kHz';
+    return Math.round(f) + 'Hz';
+  }
+  function fmtSigned(v, dec = 2) {
+    if (!Number.isFinite(v)) return '-';
+    return (v >= 0 ? '+' : '') + v.toFixed(dec) + ' dB';
+  }
+  function getTargetIndices(presetId = state.preset) {
+    const p = PRESETS[presetId] || PRESETS.TW_MID;
+    const idxs = [];
+    for (let i = 0; i < BAND_COUNT; i++) {
+      if (BANDS[i] >= p.low * 0.96 && BANDS[i] <= p.high * 1.04) idxs.push(i);
+    }
+    return idxs;
+  }
+  function getOutBandIndices(presetId = state.preset) {
+    const p = PRESETS[presetId] || PRESETS.TW_MID;
+    const idxs = [];
+    for (let i = 0; i < BAND_COUNT; i++) {
+      if (BANDS[i] < 35 || BANDS[i] > 16000) continue;
+      if (BANDS[i] < p.low * 0.7 || BANDS[i] > p.high * 1.4) idxs.push(i);
+    }
+    return idxs;
+  }
+  function mean(arr) {
+    if (!arr.length) return 0;
+    let s = 0;
+    for (let i = 0; i < arr.length; i++) s += arr[i];
+    return s / arr.length;
+  }
+  function stdDev(arr) {
+    if (arr.length < 2) return 0;
+    const m = mean(arr);
+    let s = 0;
+    for (let i = 0; i < arr.length; i++) s += (arr[i] - m) ** 2;
+    return Math.sqrt(s / arr.length);
+  }
+  function findItem(id) {
+    return state.history.find(h => h.id === id) || null;
+  }
+
+  /* =========================================================
+     5. Dayton iMM-6C Calibration File Parser & localStorage
+     ========================================================= */
+  const CAL_STORAGE_KEY = 'helix_imm6c_cal_v1';
+
+  function parseImm6cCalFile(text, fileName) {
+    const lines = text.split(/\r?\n/);
+    const points = [];
+    let sensitivity = null;
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+
+      // Sensitivity header e.g. "*1000Hz -36.6" or "Sens Factor = -36.6dB"
+      const sensMatch = line.match(/1000\s*hz[^\d+-]*([+-]?\d+(?:\.\d+)?)/i) ||
+                        line.match(/sens[^\d+-]*([+-]?\d+(?:\.\d+)?)/i);
+      if (sensMatch && (line.startsWith('*') || line.startsWith('#') || line.startsWith(';') || /sens/i.test(line))) {
+        sensitivity = parseFloat(sensMatch[1]);
+        continue;
+      }
+      if (/^[*#;"']/.test(line)) continue;
+
+      const parts = line.replace(/,/g, ' ').trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const freq = parseFloat(parts[0]);
+        const db = parseFloat(parts[1]);
+        if (Number.isFinite(freq) && Number.isFinite(db) && freq >= 5 && freq <= 30000 && Math.abs(db) <= 30) {
+          points.push({ freq, db });
+        }
+      }
+    }
+
+    if (points.length < 3) {
+      throw new Error('유효한 주파수-보정(dB) 데이터를 3개 이상 찾지 못했습니다.');
+    }
+    points.sort((a, b) => a.freq - b.freq);
+
+    // Log-frequency interpolation to 61 bands
+    const offsets = new Float32Array(BAND_COUNT);
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const f = BANDS[i];
+      if (f <= points[0].freq) {
+        offsets[i] = points[0].db;
+      } else if (f >= points[points.length - 1].freq) {
+        offsets[i] = points[points.length - 1].db;
+      } else {
+        let j = 0;
+        while (j < points.length - 2 && points[j + 1].freq < f) j++;
+        const p0 = points[j];
+        const p1 = points[j + 1];
+        const t = (Math.log10(f) - Math.log10(p0.freq)) / (Math.log10(p1.freq) - Math.log10(p0.freq));
+        offsets[i] = p0.db + t * (p1.db - p0.db);
+      }
+    }
+
+    return { fileName, sensitivity, offsets: Array.from(offsets), pointCount: points.length };
+  }
+
+  function saveCalStorage(data) {
+    try {
+      if (!data) localStorage.removeItem(CAL_STORAGE_KEY);
+      else localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { console.warn('cal save err', e); }
+  }
+
+  function loadCalStorage() {
+    try {
+      const raw = localStorage.getItem(CAL_STORAGE_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.offsets) && d.offsets.length === BAND_COUNT) {
+        state.calFileName = d.fileName || 'saved_cal.txt';
+        state.calSensitivity = d.sensitivity ?? null;
+        state.calOffsets = new Float32Array(d.offsets);
+        state.calEnabled = d.enabled !== false;
+        state.calOverlay = !!d.overlay;
+      }
+    } catch (e) { console.warn('cal load err', e); }
+    renderCalStatusUI();
+  }
+
+  function renderCalStatusUI() {
+    const hasCal = !!state.calOffsets;
+    dom.btnToggleCal.disabled = !hasCal;
+    dom.btnToggleCalOverlay.disabled = !hasCal;
+    dom.btnClearCal.disabled = !hasCal;
+
+    if (!hasCal) {
+      dom.calInfo.textContent = '저장된 보정 파일 없음 (localStorage 자동 영구 저장 지원)';
+      dom.btnToggleCal.textContent = '보정: OFF';
+      dom.btnToggleCal.classList.remove('btn-active');
+      dom.btnToggleCalOverlay.classList.remove('btn-active');
+      dom.pillCal.textContent = '보정: OFF';
+      dom.pillCal.className = 'pill';
+      dom.legCal.style.display = 'none';
+      return;
+    }
+
+    const sensStr = state.calSensitivity != null ? ` · 감도 ${state.calSensitivity} dB` : '';
+    dom.calInfo.textContent = `적용 파일: ${state.calFileName}${sensStr} (REW 표준: 측정 dB - 보정 dB)`;
+    dom.btnToggleCal.textContent = state.calEnabled ? '보정: ON' : '보정: OFF';
+    dom.btnToggleCal.classList.toggle('btn-active', state.calEnabled);
+    dom.btnToggleCalOverlay.classList.toggle('btn-active', state.calOverlay);
+    dom.pillCal.textContent = state.calEnabled ? `보정: ON (${state.calFileName.slice(0, 12)})` : '보정: 로드됨(OFF)';
+    dom.pillCal.className = state.calEnabled ? 'pill info' : 'pill';
+    dom.legCal.style.display = state.calOverlay ? 'inline-flex' : 'none';
+  }
+
+  /* =========================================================
+     6. Audio I/O (4-Step Android HAL Fallback & iMM-6C Detect)
+     ========================================================= */
+  function isImm6cLabel(label = '') {
+    return /imm-?6|dayton|usb\s*audio|usb\s*mic|uac|headset\s*usb/i.test(label);
+  }
+
+  async function refreshDevices() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const inputs = devs.filter(d => d.kind === 'audioinput');
+      const prev = dom.selDevice.value;
+      dom.selDevice.innerHTML = '<option value="">자동 감지 (iMM-6C 우선)</option>';
+      let foundImm = null;
+      inputs.forEach((d, idx) => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        const name = d.label || `마이크 입력 #${idx + 1}`;
+        const mark = isImm6cLabel(name) ? '★ [USB/iMM-6C] ' : '';
+        opt.textContent = mark + name;
+        dom.selDevice.appendChild(opt);
+        if (!foundImm && isImm6cLabel(name)) foundImm = d;
+      });
+      if (prev && inputs.some(d => d.deviceId === prev)) {
+        dom.selDevice.value = prev;
+      } else if (foundImm) {
+        dom.selDevice.value = foundImm.deviceId;
+      }
+      if (!state.micActive && !state.demoActive && foundImm) {
+        dom.pillConn.textContent = '🟢 USB-C iMM-6C 감지됨 (대기)';
+        dom.pillConn.className = 'pill ok';
+        dom.pillDev.textContent = `장치: ${(foundImm.label || 'USB Mic').slice(0, 22)}`;
+      }
+    } catch (e) { console.warn('enumerate err', e); }
+  }
+
+  async function startMic(forceCompat = false) {
+    if (state.demoActive) stopDemo();
+    stopMic(false);
+    dom.watchdogBanner.classList.remove('show');
+    dom.clipBanner.classList.remove('show');
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('이 브라우저에서는 마이크 API를 사용할 수 없습니다. HTTPS(GitHub Pages 등) 주소에서 크롬으로 접속해 주세요.');
+      return;
+    }
+
+    let preferredId = dom.selDevice.value || '';
+    if (!preferredId) {
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        const imm = devs.find(d => d.kind === 'audioinput' && isImm6cLabel(d.label));
+        if (imm) preferredId = imm.deviceId;
+      } catch (_) {}
+    }
+
+    const rawFlags = {
+      echoCancellation: { exact: false },
+      noiseSuppression: { exact: false },
+      autoGainControl: { exact: false },
+      channelCount: 1
+    };
+    const steps = forceCompat
+      ? [{ name: 'COMPAT', constraints: { audio: true } }]
+      : [
+          ...(preferredId ? [{ name: 'RAW-USB', constraints: { audio: { deviceId: { exact: preferredId }, ...rawFlags } } }] : []),
+          { name: 'RAW-DEF', constraints: { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } } },
+          ...(preferredId ? [{ name: 'CLEAN-USB', constraints: { audio: { deviceId: { ideal: preferredId }, echoCancellation: false, autoGainControl: false } } }] : []),
+          { name: 'COMPAT', constraints: { audio: true } }
+        ];
+
+    let stream = null;
+    let usedHal = '-';
+    let lastErr = null;
+
+    for (const s of steps) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(s.constraints);
+        usedHal = s.name;
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    if (!stream) {
+      alert('마이크 연결 실패: ' + (lastErr ? lastErr.message : '권한을 확인하세요.'));
+      return;
+    }
+
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!state.audioCtx) state.audioCtx = new AC({ latencyHint: 'interactive' });
+      if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+
+      const src = state.audioCtx.createMediaStreamSource(stream);
+      const analyser = state.audioCtx.createAnalyser();
+      analyser.fftSize = 16384;
+      analyser.smoothingTimeConstant = 0; // We do our own linear-power EMA
+      src.connect(analyser);
+
+      state.stream = stream;
+      state.analyser = analyser;
+      state.timeBuf = new Float32Array(analyser.fftSize);
+      state.freqBuf = new Float32Array(analyser.frequencyBinCount);
+      state.sampleRate = state.audioCtx.sampleRate;
+      state.activeHal = usedHal;
+      state.micActive = true;
+      state.silenceSince = performance.now();
+
+      const track = stream.getAudioTracks()[0];
+      const label = (track && track.label) ? track.label : '마이크 입력';
+      state.activeDevLabel = label;
+      state.isImm6c = isImm6cLabel(label);
+
+      dom.btnMic.textContent = '⏹️ 마이크 중지';
+      dom.btnMic.className = 'btn-active';
+      dom.pillConn.textContent = state.isImm6c ? '🟢 USB-C iMM-6C 연결됨' : '🟡 내장/기본 마이크';
+      dom.pillConn.className = state.isImm6c ? 'pill ok' : 'pill warn';
+      dom.pillDev.textContent = `장치: ${label.slice(0, 24)}`;
+      dom.pillRate.textContent = `SR: ${(state.sampleRate / 1000).toFixed(1)} kHz`;
+      dom.pillHal.textContent = `HAL: ${usedHal}`;
+
+      await refreshDevices();
+    } catch (e) {
+      console.error(e);
+      stopMic(true);
+      alert('오디오 엔진 초기화 오류: ' + e.message);
+    }
+  }
+
+  function stopMic(resetUi = true) {
+    if (state.stream) {
+      state.stream.getTracks().forEach(t => t.stop());
+      state.stream = null;
+    }
+    state.analyser = null;
+    state.micActive = false;
+    state.silenceSince = null;
+    dom.watchdogBanner.classList.remove('show');
+    dom.clipBanner.classList.remove('show');
+    if (resetUi) {
+      dom.btnMic.textContent = '🎤 iMM-6C 시작';
+      dom.btnMic.className = 'btn-primary';
+      dom.pillConn.textContent = '⚪ 마이크 대기 중';
+      dom.pillConn.className = 'pill';
+      dom.pillRate.textContent = 'SR: -';
+      dom.pillHal.textContent = 'HAL: -';
+      dom.adcFill.style.width = '0%';
+      dom.adcVal.textContent = '-∞ dBFS';
+    }
+  }
+
+  /* =========================================================
+     7. Built-in Paul Kellet Pink Noise Generator
+     ========================================================= */
+  async function togglePinkNoise() {
+    if (state.pinkActive) {
+      if (state.pinkNode) { try { state.pinkNode.disconnect(); } catch(_){} state.pinkNode = null; }
+      if (state.pinkGain) { try { state.pinkGain.disconnect(); } catch(_){} state.pinkGain = null; }
+      state.pinkActive = false;
+      dom.btnPink.textContent = '🔊 핑크노이즈';
+      dom.btnPink.classList.remove('btn-amber');
+      return;
+    }
+
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!state.audioCtx) state.audioCtx = new AC();
+    if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+
+    // Generate 8-second seamless pink noise AudioBuffer via Paul Kellet filter
+    const sr = state.audioCtx.sampleRate;
+    const len = sr * 8;
+    const buf = state.audioCtx.createBuffer(2, len, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buf.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.05;
+        b6 = white * 0.115926;
+      }
+    }
+
+    const src = state.audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = state.audioCtx.createGain();
+    gain.gain.value = parseFloat(dom.rngPinkVol.value);
+    src.connect(gain);
+    gain.connect(state.audioCtx.destination);
+    src.start();
+
+    state.pinkNode = src;
+    state.pinkGain = gain;
+    state.pinkActive = true;
+    dom.btnPink.textContent = '🔇 핑크노이즈 정지';
+    dom.btnPink.classList.add('btn-amber');
+  }
+
+  /* =========================================================
+     8. Physical Complex-Vector Demo Mode
+     ========================================================= */
+  function startDemo() {
+    if (state.micActive) stopMic(true);
+    state.demoActive = true;
+    setDemoScenario('init');
+    dom.btnDemo.classList.add('btn-active');
+    dom.demoBanner.classList.add('show');
+    dom.pillConn.textContent = '🎮 데모 시뮬레이션 활성';
+    dom.pillConn.className = 'pill info';
+    dom.pillDev.textContent = '장치: Virtual iMM-6C';
+    dom.pillRate.textContent = 'SR: 48.0 kHz';
+    dom.pillHal.textContent = 'HAL: SIM';
+  }
+
+  function stopDemo() {
+    state.demoActive = false;
+    dom.btnDemo.classList.remove('btn-active');
+    dom.demoBanner.classList.remove('show');
+    dom.pillConn.textContent = '⚪ 마이크 대기 중';
+    dom.pillConn.className = 'pill';
+    dom.pillDev.textContent = '장치: 미연결';
+    dom.pillRate.textContent = 'SR: -';
+    dom.pillHal.textContent = 'HAL: -';
+    dom.adcFill.style.width = '0%';
+    dom.adcVal.textContent = '-∞ dBFS';
+  }
+
+  function setDemoScenario(sc) {
+    state.demoScenario = sc;
+    dom.demoInit.classList.toggle('btn-active', sc === 'init');
+    dom.demoGood.classList.toggle('btn-active', sc === 'good');
+    dom.demoBad.classList.toggle('btn-active', sc === 'bad');
+  }
+
+  function computeDemoFrame(tSec) {
+    // Realistic car cabin pink-noise RTA baseline + complex vector summation in each crossover / L-R region
+    const sc = state.demoScenario;
+    // Phase errors (degrees) per acoustic interaction
+    const phaseErr = {
+      subMid: sc === 'good' ? 12  : sc === 'bad' ? 168 : 128, // 50~110Hz
+      midLR:  sc === 'good' ? 14  : sc === 'bad' ? 170 : 115, // 150~2000Hz
+      twMid:  sc === 'good' ? 10  : sc === 'bad' ? 165 : 122, // 2500~5000Hz
+      twLR:   sc === 'good' ? 15  : sc === 'bad' ? 175 : 145  // 2000~10000Hz
+    };
+
+    const vecGainDb = (deg, mixWeight) => {
+      // |1 + w * e^(j*phi)| normalized to uncorrelated sum
+      const rad = (deg * Math.PI) / 180;
+      const mag = Math.sqrt(1 + mixWeight * mixWeight + 2 * mixWeight * Math.cos(rad));
+      const refMag = Math.sqrt(1 + mixWeight * mixWeight);
+      return 20 * Math.log10(Math.max(mag / refMag, 0.12));
+    };
+
+    const gauss = (f, fc, octWidth) => {
+      const d = Math.log2(f / fc) / octWidth;
+      return Math.exp(-0.5 * d * d);
+    };
+
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const f = BANDS[i];
+      // Base car house curve (gentle warm bass, smooth rolloff above 10kHz)
+      let base = -34
+        + 4.5 * gauss(f, 55, 0.9)
+        - 1.8 * gauss(f, 220, 0.45)
+        + 1.0 * gauss(f, 1200, 0.8)
+        - (f > 10000 ? 6 * Math.log2(f / 10000) : 0);
+
+      // Apply crossover / L-R phase interactions
+      const wSub = 0.85 * gauss(f, 78, 0.55);
+      const wMidLR = 0.72 * gauss(f, 550, 1.25);
+      const wTwMid = 0.82 * gauss(f, 3500, 0.48);
+      const wTwLR = 0.74 * gauss(f, 5200, 0.9);
+
+      base += vecGainDb(phaseErr.subMid, wSub) * 0.95;
+      if (state.preset === 'MID_LR' || state.preset === 'FULL') {
+        base += vecGainDb(phaseErr.midLR, wMidLR) * 0.85;
+      } else {
+        base += vecGainDb(phaseErr.midLR, wMidLR) * 0.25;
+      }
+      base += vecGainDb(phaseErr.twMid, wTwMid) * 0.85;
+      if (state.preset === 'TW_LR') {
+        base += vecGainDb(phaseErr.twLR, wTwLR) * 0.9;
+      }
+
+      // Natural pink noise jitter (more variance at lower frequencies due to fewer cycles)
+      const jitterAmp = f < 120 ? 1.4 : f < 500 ? 0.8 : 0.45;
+      const jitter = (Math.random() - 0.5) * 2 * jitterAmp + Math.sin(tSec * 3.1 + i * 0.7) * 0.15;
+
+      let db = base + jitter + state.trimDb;
+      if (state.calEnabled && state.calOffsets) {
+        db -= state.calOffsets[i];
+      }
+      const pwr = Math.pow(10, db / 10);
+      const alpha = f < 150 ? 0.18 : 0.28;
+      state.emaPower[i] = state.emaPower[i] * (1 - alpha) + pwr * alpha;
+      state.liveDb[i] = 10 * Math.log10(Math.max(state.emaPower[i], 1e-12));
+    }
+
+    // Simulated ADC peak around -18 dBFS
+    const peakDb = -18 + (Math.random() - 0.5) * 3.5;
+    updateAdcMeter(peakDb);
+  }
+
+  /* =========================================================
+     9. Real-Time FFT -> 1/6-Octave Partial-Bin Integration
+     ========================================================= */
+  function updateAdcMeter(peakDb) {
+    state.lastAdcPeakDb = peakDb;
+    const pct = Math.max(0, Math.min(100, ((peakDb + 60) / 60) * 100));
+    dom.adcFill.style.width = pct.toFixed(1) + '%';
+    dom.adcVal.textContent = peakDb <= -80 ? '-∞ dBFS' : peakDb.toFixed(1) + ' dBFS';
+    dom.clipBanner.classList.toggle('show', peakDb >= -1.0);
+  }
+
+  function processMicFrame() {
+    if (!state.analyser) return;
+    state.analyser.getFloatTimeDomainData(state.timeBuf);
+
+    // Pre-trim hardware ADC Peak & Silence Watchdog
+    let maxAbs = 0;
+    for (let i = 0; i < state.timeBuf.length; i += 4) {
+      const a = Math.abs(state.timeBuf[i]);
+      if (a > maxAbs) maxAbs = a;
+    }
+    const peakDb = maxAbs > 1e-6 ? 20 * Math.log10(maxAbs) : -120;
+    updateAdcMeter(peakDb);
+
+    if (maxAbs < 1e-5) {
+      if (state.silenceSince && (performance.now() - state.silenceSince) > 1800) {
+        dom.watchdogBanner.classList.add('show');
+      }
+    } else {
+      state.silenceSince = performance.now();
+      dom.watchdogBanner.classList.remove('show');
+    }
+
+    // FFT magnitude in dBFS
+    state.analyser.getFloatFrequencyData(state.freqBuf);
+    const binHz = state.sampleRate / state.analyser.fftSize;
+    const maxBin = state.freqBuf.length - 1;
+
+    for (let b = 0; b < BAND_COUNT; b++) {
+      const [fLo, fHi] = BAND_EDGES[b];
+      const exactLo = fLo / binHz;
+      const exactHi = fHi / binHz;
+      const kStart = Math.max(1, Math.floor(exactLo));
+      const kEnd = Math.min(maxBin, Math.ceil(exactHi));
+
+      let energy = 0;
+      let weightSum = 0;
+      for (let k = kStart; k <= kEnd; k++) {
+        // Partial-bin overlap fraction for crisp low-frequency 1/6-oct integration
+        const bLo = k - 0.5;
+        const bHi = k + 0.5;
+        const overlap = Math.max(0, Math.min(exactHi, bHi) - Math.max(exactLo, bLo));
+        const w = overlap > 0 ? overlap : (kStart === kEnd ? 1 : 0);
+        if (w <= 0) continue;
+        const binDb = state.freqBuf[k];
+        if (Number.isFinite(binDb) && binDb > -150) {
+          energy += Math.pow(10, binDb / 10) * w;
+          weightSum += w;
+        }
+      }
+
+      // Pink-noise visual weighting (energy sum over constant-Q band stays flat for pink noise!)
+      const bandPwr = Math.max(energy, 1e-12);
+      let db = 10 * Math.log10(bandPwr) + state.trimDb;
+      if (state.calEnabled && state.calOffsets) {
+        db -= state.calOffsets[b];
+      }
+      const pwrAdj = Math.pow(10, db / 10);
+      const alpha = BANDS[b] < 150 ? 0.16 : 0.28;
+      state.emaPower[b] = state.emaPower[b] * (1 - alpha) + pwrAdj * alpha;
+      state.liveDb[b] = 10 * Math.log10(Math.max(state.emaPower[b], 1e-12));
+    }
+  }
+
+  /* =========================================================
+     10. Capture & 5-Level Automatic Phase Judgment Engine
+     ========================================================= */
+  function startCapture() {
+    if (!state.micActive && !state.demoActive) {
+      alert('먼저 상단의 [🎤 iMM-6C 시작] 또는 [🎮 데모 모드]를 켜 주세요.');
+      return;
+    }
+    if (state.capturing) return;
+
+    state.capturing = true;
+    state.capStart = performance.now();
+    state.capAccumPower.fill(0);
+    state.capFrames = 0;
+
+    dom.btnDetect.classList.add('capturing');
+    dom.btnDetect.disabled = true;
+    dom.progressTrack.classList.add('show');
+    dom.progressBar.style.width = '0%';
+  }
+
+  function stepCapture(now) {
+    if (!state.capturing) return;
+    for (let i = 0; i < BAND_COUNT; i++) {
+      state.capAccumPower[i] += Math.pow(10, state.liveDb[i] / 10);
+    }
+    state.capFrames++;
+
+    const elapsed = now - state.capStart;
+    const pct = Math.min(100, (elapsed / state.durationMs) * 100);
+    dom.progressBar.style.width = pct.toFixed(1) + '%';
+    const rem = Math.max(0, (state.durationMs - elapsed) / 1000).toFixed(1);
+    dom.btnDetect.textContent = `⏳ 측정 중... (${rem}초 남음)`;
+
+    if (elapsed >= state.durationMs && state.capFrames >= 5) {
+      finishCapture();
+    }
+  }
+
+  function finishCapture() {
+    state.capturing = false;
+    dom.btnDetect.classList.remove('capturing');
+    dom.btnDetect.disabled = false;
+    dom.progressTrack.classList.remove('show');
+
+    const bands = new Array(BAND_COUNT);
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const avgPwr = state.capAccumPower[i] / Math.max(1, state.capFrames);
+      bands[i] = 10 * Math.log10(Math.max(avgPwr, 1e-12));
+    }
+
+    const tIdxs = getTargetIndices(state.preset);
+    const tVals = tIdxs.map(i => bands[i]);
+    const avgDb = mean(tVals);
+    const sd = stdDev(tVals);
+
+    const id = state.history.length ? Math.max(...state.history.map(h => h.id)) + 1 : 1;
+    const nowStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+
+    // Determine comparison reference
+    let refItem = null;
+    if (state.compareTarget === 'best' && state.bestIdByPreset[state.preset]) {
+      refItem = findItem(state.bestIdByPreset[state.preset]);
+    }
+    if (!refItem && state.refId) {
+      refItem = findItem(state.refId);
+    }
+
+    const item = {
+      id,
+      ts: nowStr,
+      preset: state.preset,
+      mode: state.mode,
+      bands,
+      avgDb,
+      sd,
+      refUsedId: refItem ? refItem.id : null,
+      deltaDb: null,
+      peakFreq: null,
+      peakDelta: null,
+      driftDb: null,
+      verdictClass: 'v-neutral',
+      verdictLabel: '기준 저장'
+    };
+
+    // Update BEST for this preset/mode
+    const prevBestId = state.bestIdByPreset[state.preset];
+    const prevBest = prevBestId ? findItem(prevBestId) : null;
+    let isNewBest = false;
+
+    if (!refItem) {
+      // First baseline capture
+      state.history.push(item);
+      state.refId = item.id;
+      state.currId = null;
+      state.bestIdByPreset[state.preset] = item.id;
+      renderVerdictBaseline(item);
+    } else {
+      // Compare with reference
+      const diffs = tIdxs.map(i => ({ i, d: bands[i] - refItem.bands[i] }));
+      const deltaDb = mean(diffs.map(x => x.d));
+
+      let peakObj = diffs[0];
+      for (const x of diffs) {
+        if (Math.abs(x.d) > Math.abs(peakObj.d)) peakObj = x;
+      }
+
+      const outIdxs = getOutBandIndices(state.preset);
+      const driftDb = outIdxs.length ? mean(outIdxs.map(i => bands[i] - refItem.bands[i])) : 0;
+
+      // Check new BEST
+      if (!prevBest) {
+        isNewBest = true;
+      } else {
+        const prevBestAvg = mean(tIdxs.map(i => prevBest.bands[i]));
+        if (state.mode === 'boost' && avgDb > prevBestAvg + 0.15) isNewBest = true;
+        if (state.mode === 'null' && avgDb < prevBestAvg - 0.15) isNewBest = true;
+      }
+      if (isNewBest) state.bestIdByPreset[state.preset] = item.id;
+
+      item.deltaDb = deltaDb;
+      item.peakFreq = BANDS[peakObj.i];
+      item.peakDelta = peakObj.d;
+      item.driftDb = driftDb;
+
+      const v = evaluateVerdict(deltaDb, state.mode, isNewBest, driftDb);
+      item.verdictClass = v.cls;
+      item.verdictLabel = v.short;
+
+      state.history.push(item);
+      state.currId = item.id;
+      // Advance reference to this latest measurement only if user doesn't discard,
+      // wait: keep refId as the compared baseline so graph shows Before(refId) vs After(currId)!
+      // Next time detect is clicked, we compare against the latest measurement (currId -> becomes new refId).
+      renderVerdictComparison(item, refItem, v);
+    }
+
+    updateDetectBtnLabel();
+    renderHistory();
+  }
+
+  function evaluateVerdict(delta, mode, isNewBest, driftDb) {
+    const driftWarn = Math.abs(driftDb) >= 1.5
+      ? ' (⚠️ 대역 외 볼륨이 변동되었습니다. 헤드유닛 볼륨을 고정하고 재측정하세요.)'
+      : '';
+
+    if (mode === 'boost') {
+      if (isNewBest && delta >= 0.8) {
+        return {
+          cls: 'v-best',
+          short: '🏆 역대 최고 정합',
+          title: '🏆 역대 최고 정합 도달! (위상 보강)',
+          guide: '타겟 대역 음압이 세션 최고치로 상승했습니다. 현재 방향으로 1~2스텝 더 미세 조정해 정점(Peak)을 확인한 뒤 고정하세요.' + driftWarn
+        };
+      }
+      if (delta >= 0.8) {
+        return {
+          cls: 'v-good',
+          short: '✅ 위상 잘 맞음',
+          title: '✅ 위상 잘 맞음! (보강 확인)',
+          guide: '이전 설정보다 위상이 잘 맞아 음압이 상승했습니다. 같은 방향으로 조금 더 조정해 추가 상승 여부를 확인해 보세요.' + driftWarn
+        };
+      }
+      if (delta > -0.8) {
+        return {
+          cls: 'v-neutral',
+          short: '➖ 변화 미미',
+          title: '➖ 변화 미미 / 정점 부근 유지',
+          guide: '음압 변화가 ±0.8 dB 이내입니다. 이미 정점에 근접했거나 조정 폭이 작습니다. 조금 더 크게(예: ±22.5° 또는 0.1ms) 움직여 경향을 확인하세요.' + driftWarn
+        };
+      }
+      if (delta > -2.0) {
+        return {
+          cls: 'v-warn',
+          short: '⚠️ 소폭 감쇠',
+          title: '⚠️ 소폭 위상 감쇠 발생',
+          guide: '이전보다 음압이 줄어들었습니다. 방금 바꾼 방향의 반대로 되돌린 뒤 다시 측정하세요.' + driftWarn
+        };
+      }
+      return {
+        cls: 'v-bad',
+        short: '❌ 위상 상쇄',
+        title: '❌ 위상 감쇠 · 상쇄 발생!',
+        guide: '크로스오버/좌우 대역에서 강한 상쇄(캔슬링)가 발생했습니다. 즉시 이전 값으로 되돌리거나 극성(180°)을 반전해 보세요.' + driftWarn
+      };
+    } else {
+      // Null-search mode (lower dB = deeper null = closer to exact 180° opposite)
+      if (isNewBest && delta <= -0.8) {
+        return {
+          cls: 'v-best',
+          short: '🏆 최저 딥 도달',
+          title: '🏆 역대 최고 딥(Null) 도달!',
+          guide: '가장 깊은 상쇄 지점입니다! 이 지점이 180° 역상 정점이므로, 완료 후 대상 채널 극성(Polarity)을 180° 반전하면 완벽한 정위상이 됩니다.' + driftWarn
+        };
+      }
+      if (delta <= -0.8) {
+        return {
+          cls: 'v-good',
+          short: '✅ 깊은 딥 접근',
+          title: '✅ 상쇄 심화 (최저 딥에 근접)',
+          guide: '딥이 더 깊어졌습니다. 같은 방향으로 조금 더 미세 조정해 음압이 가장 낮아지는 최저점을 찾으세요.' + driftWarn
+        };
+      }
+      if (delta < 0.8) {
+        return {
+          cls: 'v-neutral',
+          short: '➖ 변화 미미',
+          title: '➖ 변화 미미 / 딥 바닥 부근',
+          guide: '딥 변화가 ±0.8 dB 이내입니다. 최저점 부근이라면 채널 극성을 180° 반전한 뒤 [정위상 보강] 모드로 최종 확인하세요.' + driftWarn
+        };
+      }
+      if (delta < 2.0) {
+        return {
+          cls: 'v-warn',
+          short: '⚠️ 딥 약화',
+          title: '⚠️ 딥에서 멀어짐 (음압 상승)',
+          guide: '상쇄가 약해졌습니다. 방금 조정한 방향의 반대로 되돌려 더 깊은 딥을 찾으세요.' + driftWarn
+        };
+      }
+      return {
+        cls: 'v-bad',
+        short: '❌ 보강 방향 이동',
+        title: '❌ 역상 딥 이탈 (보강 방향)',
+        guide: '음압이 크게 올라갔습니다. 역상 딥 탐색 시에는 반대 방향으로 조정하거나 극성(180°)을 뒤집어 딥을 다시 잡으세요.' + driftWarn
+      };
+    }
+  }
+
+  function renderVerdictBaseline(item) {
+    const p = PRESETS[item.preset];
+    dom.verdictCard.className = 'verdict-card v-neutral';
+    dom.verdictTitle.textContent = `📌 #${item.id} 기준값 저장 완료 (${p.name})`;
+    dom.verdictSub.textContent = `${item.ts} · 이제 HELIX DSP 설정을 변경한 뒤 [🎯 위상 감지]를 다시 누르세요.`;
+    dom.btnDiscard.style.display = 'none';
+    dom.mDelta.textContent = '기준 (0.00 dB)';
+    dom.mDelta.style.color = 'var(--cyan)';
+    dom.mPeakFreq.textContent = `평균 ${item.avgDb.toFixed(1)} dB`;
+    dom.mPeakFreq.style.color = 'var(--text)';
+    dom.mFlatness.textContent = `SD ${item.sd.toFixed(2)} dB`;
+    dom.mFlatness.style.color = 'var(--text)';
+    dom.mDrift.textContent = '대기 중';
+    dom.mDrift.style.color = 'var(--muted)';
+    dom.guideLine.innerHTML = `<strong>다음 단계:</strong> DSP PC-Tool에서 위상(Phase) · 극성(Polarity) · 타임얼라인먼트(TA) 중 하나를 변경하고 다시 <strong>[🎯 위상 감지]</strong>를 누르면 #${item.id} 기준과 즉시 비교합니다.`;
+  }
+
+  function renderVerdictComparison(item, refItem, v) {
+    const p = PRESETS[item.preset];
+    const tIdxs = getTargetIndices(item.preset);
+    const refSd = stdDev(tIdxs.map(i => refItem.bands[i]));
+
+    dom.verdictCard.className = `verdict-card ${v.cls}`;
+    dom.verdictTitle.textContent = v.title;
+    dom.verdictSub.textContent = `#${item.id} (${item.ts}) vs 기준 #${refItem.id} · ${p.name} (${fmtFreq(p.low)}~${fmtFreq(p.high)})`;
+    dom.btnDiscard.style.display = 'inline-flex';
+
+    dom.mDelta.textContent = fmtSigned(item.deltaDb, 2);
+    dom.mDelta.style.color = (v.cls === 'v-best' || v.cls === 'v-good')
+      ? 'var(--emerald)' : (v.cls === 'v-bad' ? 'var(--red)' : v.cls === 'v-warn' ? 'var(--amber)' : 'var(--cyan)');
+
+    dom.mPeakFreq.textContent = `${fmtFreq(item.peakFreq)} (${fmtSigned(item.peakDelta, 1)})`;
+    dom.mPeakFreq.style.color = 'var(--text)';
+
+    const sdDiff = item.sd - refSd;
+    dom.mFlatness.textContent = `${refSd.toFixed(2)} → ${item.sd.toFixed(2)} dB`;
+    dom.mFlatness.style.color = sdDiff <= -0.15 ? 'var(--emerald)' : sdDiff >= 0.25 ? 'var(--amber)' : 'var(--text)';
+
+    const driftAbs = Math.abs(item.driftDb);
+    dom.mDrift.textContent = driftAbs >= 1.5 ? `⚠️ ${fmtSigned(item.driftDb, 1)}` : `안정 (${fmtSigned(item.driftDb, 1)})`;
+    dom.mDrift.style.color = driftAbs >= 1.5 ? 'var(--red)' : 'var(--emerald)';
+
+    dom.guideLine.innerHTML = `<strong>튜닝 가이드:</strong> ${v.guide}`;
+  }
+
+  function updateDetectBtnLabel() {
+    const sec = state.durationMs / 1000;
+    if (!state.history.length || !state.refId) {
+      dom.btnDetect.textContent = `🎯 첫 기준 위상 감지 (${sec}초 평균)`;
+    } else {
+      const targetTxt = state.compareTarget === 'best' ? 'BEST 대비' : '이전 값 대비';
+      dom.btnDetect.textContent = `🎯 위상 감지 및 비교 (${targetTxt} · ${sec}초)`;
+    }
+  }
+
+  /* =========================================================
+     11. History UI & JSON Export / Import
+     ========================================================= */
+  function renderHistory() {
+    dom.histCount.textContent = String(state.history.length);
+    if (!state.history.length) {
+      dom.historyList.innerHTML = '<div class="empty-msg">아직 저장된 측정 이력이 없습니다.</div>';
+      return;
+    }
+
+    const bestIds = new Set(Object.values(state.bestIdByPreset));
+    dom.historyList.innerHTML = '';
+
+    [...state.history].reverse().forEach(item => {
+      const p = PRESETS[item.preset] || PRESETS.TW_MID;
+      const isRef = item.id === state.refId;
+      const isCurr = item.id === state.currId;
+      const isBest = bestIds.has(item.id);
+
+      const div = document.createElement('div');
+      div.className = `history-item${isRef ? ' is-ref' : ''}${isBest ? ' is-best' : ''}`;
+
+      const deltaBadge = item.deltaDb != null
+        ? `<span class="pill ${item.verdictClass === 'v-best' || item.verdictClass === 'v-good' ? 'ok' : item.verdictClass === 'v-bad' ? 'err' : 'warn'}">${item.verdictLabel} (${fmtSigned(item.deltaDb, 2)})</span>`
+        : `<span class="pill info">기준</span>`;
+
+      div.innerHTML = `
+        <div class="h-meta">
+          <div class="h-top">
+            <span>#${item.id}</span>
+            <span class="pill">${p.label}</span>
+            ${deltaBadge}
+            ${isBest ? '<span class="pill ok">🏆 BEST</span>' : ''}
+            ${isRef ? '<span class="pill info">현재 기준</span>' : ''}
+            ${isCurr && !isRef ? '<span class="pill warn">최신 비교</span>' : ''}
+            <span style="font-size:11px; color:var(--muted); font-weight:500;">${item.ts}</span>
+          </div>
+          <div class="h-stats">
+            타겟 평균 ${item.avgDb.toFixed(1)} dB · 평탄도 SD ${item.sd.toFixed(2)} dB${item.peakFreq ? ` · 최대변화 ${fmtFreq(item.peakFreq)} (${fmtSigned(item.peakDelta, 1)})` : ''}
+          </div>
+        </div>
+        <div class="h-actions">
+          <button class="btn-sm btn-set-ref" data-id="${item.id}">${isRef ? '기준됨' : '기준 지정'}</button>
+          <button class="btn-sm btn-danger btn-del" data-id="${item.id}">삭제</button>
+        </div>
+      `;
+      dom.historyList.appendChild(div);
+    });
+
+    dom.historyList.querySelectorAll('.btn-set-ref').forEach(btn => {
+      btn.onclick = () => {
+        const id = Number(btn.dataset.id);
+        state.refId = id;
+        if (state.currId === id) state.currId = null;
+        const item = findItem(id);
+        if (item) renderVerdictBaseline(item);
+        updateDetectBtnLabel();
+        renderHistory();
+      };
+    });
+
+    dom.historyList.querySelectorAll('.btn-del').forEach(btn => {
+      btn.onclick = () => {
+        const id = Number(btn.dataset.id);
+        state.history = state.history.filter(h => h.id !== id);
+        if (state.refId === id) state.refId = state.history.length ? state.history[state.history.length - 1].id : null;
+        if (state.currId === id) state.currId = null;
+        recomputeBestMap();
+        updateDetectBtnLabel();
+        renderHistory();
+      };
+    });
+  }
+
+  function recomputeBestMap() {
+    state.bestIdByPreset = {};
+    for (const h of state.history) {
+      const prevId = state.bestIdByPreset[h.preset];
+      const prev = prevId ? findItem(prevId) : null;
+      if (!prev) {
+        state.bestIdByPreset[h.preset] = h.id;
+      } else if (state.mode === 'boost' ? h.avgDb > prev.avgDb : h.avgDb < prev.avgDb) {
+        state.bestIdByPreset[h.preset] = h.id;
+      }
+    }
+  }
+
+  /* =========================================================
+     12. Dual Aligned HiDPI Canvas Rendering (60 fps)
+     ========================================================= */
+  const PAD = { left: 46, right: 14, top: 16, bottom: 24 };
+  const FREQ_TICKS = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+
+  function freqToX(f, plotW) {
+    const t = (Math.log10(f) - Math.log10(F_MIN)) / (Math.log10(F_MAX) - Math.log10(F_MIN));
+    return PAD.left + Math.max(0, Math.min(1, t)) * plotW;
+  }
+
+  function resizeCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(300, Math.round(rect.width * dpr));
+    const h = Math.max(100, Math.round(rect.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    return { ctx: canvas.getContext('2d'), w: rect.width, h: rect.height, dpr };
+  }
+
+  function drawCharts() {
+    const rta = resizeCanvas(dom.rtaCanvas);
+    const diff = resizeCanvas(dom.diffCanvas);
+
+    drawRta(rta);
+    drawDiff(diff);
+  }
+
+  function drawRta({ ctx, w, h, dpr }) {
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const plotW = w - PAD.left - PAD.right;
+    const plotH = h - PAD.top - PAD.bottom;
+    const DB_MIN = -80;
+    const DB_MAX = 0;
+    const dbToY = (db) => PAD.top + (1 - Math.max(0, Math.min(1, (db - DB_MIN) / (DB_MAX - DB_MIN)))) * plotH;
+
+    // Target band highlight
+    const p = PRESETS[state.preset];
+    const xLo = freqToX(p.low, plotW);
+    const xHi = freqToX(p.high, plotW);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.09)';
+    ctx.fillRect(xLo, PAD.top, xHi - xLo, plotH);
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xLo, PAD.top); ctx.lineTo(xLo, PAD.top + plotH);
+    ctx.moveTo(xHi, PAD.top); ctx.lineTo(xHi, PAD.top + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Horizontal dB grid
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let db = DB_MIN; db <= DB_MAX; db += 10) {
+      const y = dbToY(db);
+      ctx.strokeStyle = db === -40 ? '#273550' : '#162033';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + plotW, y); ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(db + 'dB', PAD.left - 6, y);
+    }
+
+    // Vertical Freq grid
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const ft of FREQ_TICKS) {
+      const x = freqToX(ft, plotW);
+      ctx.strokeStyle = '#162033';
+      ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + plotH); ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(ft >= 1000 ? (ft / 1000) + 'k' : String(ft), x, PAD.top + plotH + 6);
+    }
+
+    // Live vertical bars + gradient fill + amber curve
+    const barW = Math.max(2, (plotW / BAND_COUNT) * 0.56);
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const x = freqToX(BANDS[i], plotW);
+      const y = dbToY(state.liveDb[i]);
+      const inBand = BANDS[i] >= p.low && BANDS[i] <= p.high;
+      ctx.fillStyle = inBand ? 'rgba(245, 158, 11, 0.28)' : 'rgba(245, 158, 11, 0.13)';
+      ctx.fillRect(x - barW / 2, y, barW, PAD.top + plotH - y);
+    }
+
+    // Live curve
+    ctx.beginPath();
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const x = freqToX(BANDS[i], plotW);
+      const y = dbToY(state.liveDb[i]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    // Calibration overlay curve (centered around -40 dB)
+    if (state.calOverlay && state.calOffsets) {
+      ctx.beginPath();
+      for (let i = 0; i < BAND_COUNT; i++) {
+        const x = freqToX(BANDS[i], plotW);
+        const y = dbToY(-40 + state.calOffsets[i] * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Reference curve (Cyan dashed)
+    const refItem = findItem(state.refId);
+    if (refItem) {
+      ctx.beginPath();
+      for (let i = 0; i < BAND_COUNT; i++) {
+        const x = freqToX(BANDS[i], plotW);
+        const y = dbToY(refItem.bands[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Current captured curve (Verdict colored solid)
+    const currItem = findItem(state.currId);
+    if (currItem) {
+      ctx.beginPath();
+      for (let i = 0; i < BAND_COUNT; i++) {
+        const x = freqToX(BANDS[i], plotW);
+        const y = dbToY(currItem.bands[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      const c = (currItem.verdictClass === 'v-bad') ? '#ef4444'
+              : (currItem.verdictClass === 'v-warn') ? '#fbbf24' : '#10b981';
+      ctx.strokeStyle = c;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+    }
+
+    // Hover crosshair
+    if (state.hoverBand >= 0) {
+      const x = freqToX(BANDS[state.hoverBand], plotW);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + plotH); ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawDiff({ ctx, w, h, dpr }) {
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const plotW = w - PAD.left - PAD.right;
+    const plotH = h - 12 - 22;
+    const top = 12;
+    const DIFF_MAX = 9;
+    const midY = top + plotH / 2;
+    const diffToY = (d) => midY - (Math.max(-DIFF_MAX, Math.min(DIFF_MAX, d)) / DIFF_MAX) * (plotH / 2);
+
+    const p = PRESETS[state.preset];
+    const xLo = freqToX(p.low, plotW);
+    const xHi = freqToX(p.high, plotW);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.08)';
+    ctx.fillRect(xLo, top, xHi - xLo, plotH);
+
+    // Horizontal grid (-6, 0, +6 dB)
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (const d of [-6, 0, 6]) {
+      const y = diffToY(d);
+      ctx.strokeStyle = d === 0 ? '#334155' : '#162033';
+      ctx.lineWidth = d === 0 ? 1.2 : 1;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + plotW, y); ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.fillText((d > 0 ? '+' : '') + d + 'dB', PAD.left - 6, y);
+    }
+
+    // Vertical Freq ticks
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const ft of FREQ_TICKS) {
+      const x = freqToX(ft, plotW);
+      ctx.strokeStyle = '#162033';
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + plotH); ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(ft >= 1000 ? (ft / 1000) + 'k' : String(ft), x, top + plotH + 5);
+    }
+
+    const refItem = findItem(state.refId);
+    const currItem = findItem(state.currId);
+    const compareSrc = currItem ? currItem.bands : (refItem && (state.micActive || state.demoActive) ? state.liveDb : null);
+
+    if (refItem && compareSrc) {
+      const barW = Math.max(2.5, (plotW / BAND_COUNT) * 0.62);
+      for (let i = 0; i < BAND_COUNT; i++) {
+        const d = compareSrc[i] - refItem.bands[i];
+        const x = freqToX(BANDS[i], plotW);
+        const y = diffToY(d);
+        const inBand = BANDS[i] >= p.low && BANDS[i] <= p.high;
+        const alpha = inBand ? (currItem ? 0.92 : 0.6) : 0.25;
+        ctx.fillStyle = d >= 0 ? `rgba(16, 185, 129, ${alpha})` : `rgba(239, 68, 68, ${alpha})`;
+        const barH = Math.abs(y - midY);
+        ctx.fillRect(x - barW / 2, Math.min(y, midY), barW, Math.max(1, barH));
+      }
+    } else {
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('기준 측정 후 ΔdB 변화 그래프가 표시됩니다', PAD.left + plotW / 2, midY);
+    }
+
+    if (state.hoverBand >= 0) {
+      const x = freqToX(BANDS[state.hoverBand], plotW);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + plotH); ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  /* =========================================================
+     13. Interactive Synchronized Crosshair & Tooltip
+     ========================================================= */
+  function handlePointer(clientX, clientY) {
+    const rect = dom.rtaCanvas.getBoundingClientRect();
+    const relX = clientX - rect.left;
+    const plotW = rect.width - PAD.left - PAD.right;
+    if (relX < PAD.left || relX > PAD.left + plotW) {
+      hideTooltip();
+      return;
+    }
+
+    const t = (relX - PAD.left) / plotW;
+    const f = Math.pow(10, Math.log10(F_MIN) + t * (Math.log10(F_MAX) - Math.log10(F_MIN)));
+    let bestI = 0, bestDist = Infinity;
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const d = Math.abs(Math.log10(BANDS[i]) - Math.log10(f));
+      if (d < bestDist) { bestDist = d; bestI = i; }
+    }
+    state.hoverBand = bestI;
+
+    const refItem = findItem(state.refId);
+    const currItem = findItem(state.currId);
+    const liveVal = state.liveDb[bestI];
+    const refVal = refItem ? refItem.bands[bestI] : null;
+    const currVal = currItem ? currItem.bands[bestI] : null;
+    const deltaVal = refVal != null ? ((currVal != null ? currVal : liveVal) - refVal) : null;
+
+    dom.tooltip.innerHTML = `
+      <div style="color:#22d3ee; font-weight:800; margin-bottom:3px;">${fmtFreq(BANDS[bestI])}</div>
+      <div>실시간: <span style="color:#f59e0b">${liveVal.toFixed(1)} dB</span></div>
+      ${refVal != null ? `<div>기준(#${refItem.id}): <span style="color:#67e8f9">${refVal.toFixed(1)} dB</span></div>` : ''}
+      ${currVal != null ? `<div>현재(#${currItem.id}): <span style="color:#6ee7b7">${currVal.toFixed(1)} dB</span></div>` : ''}
+      ${deltaVal != null ? `<div>ΔdB: <strong style="color:${deltaVal >= 0 ? '#10b981' : '#ef4444'}">${fmtSigned(deltaVal, 2)}</strong></div>` : ''}
+    `;
+    dom.tooltip.style.display = 'block';
+
+    const stackRect = dom.canvasStack.getBoundingClientRect();
+    let left = clientX - stackRect.left + 12;
+    if (left + 165 > stackRect.width) left = clientX - stackRect.left - 170;
+    const top = Math.max(8, Math.min(stackRect.height - 105, clientY - stackRect.top - 15));
+    dom.tooltip.style.left = left + 'px';
+    dom.tooltip.style.top = top + 'px';
+  }
+
+  function hideTooltip() {
+    state.hoverBand = -1;
+    dom.tooltip.style.display = 'none';
+  }
+
+  /* =========================================================
+     14. Main Animation Loop (60 fps)
+     ========================================================= */
+  function loop(now) {
+    if (state.micActive) {
+      processMicFrame();
+    } else if (state.demoActive) {
+      computeDemoFrame(now / 1000);
+    }
+    if (state.capturing) {
+      stepCapture(now);
+    }
+    drawCharts();
+    requestAnimationFrame(loop);
+  }
+
+  /* =========================================================
+     15. Event Wiring
+     ========================================================= */
+  dom.btnMic.onclick = () => state.micActive ? stopMic(true) : startMic(false);
+  dom.btnRetryCompat.onclick = () => startMic(true);
+  dom.btnPink.onclick = togglePinkNoise;
+  dom.btnSettings.onclick = () => {
+    dom.settingsDrawer.classList.toggle('open');
+    dom.btnSettings.classList.toggle('btn-active', dom.settingsDrawer.classList.contains('open'));
+  };
+  dom.btnDemo.onclick = () => state.demoActive ? stopDemo() : startDemo();
+  dom.demoInit.onclick = () => setDemoScenario('init');
+  dom.demoGood.onclick = () => setDemoScenario('good');
+  dom.demoBad.onclick = () => setDemoScenario('bad');
+
+  dom.btnRefreshDev.onclick = refreshDevices;
+  dom.selDevice.onchange = () => { if (state.micActive) startMic(false); };
+
+  dom.rngTrim.oninput = () => {
+    state.trimDb = parseFloat(dom.rngTrim.value);
+    dom.trimLabel.textContent = fmtSigned(state.trimDb, 1);
+  };
+  document.querySelectorAll('.trim-quick').forEach(b => {
+    b.onclick = () => {
+      state.trimDb = parseFloat(b.dataset.trim);
+      dom.rngTrim.value = String(state.trimDb);
+      dom.trimLabel.textContent = fmtSigned(state.trimDb, 1);
+    };
+  });
+
+  dom.rngPinkVol.oninput = () => {
+    const v = parseFloat(dom.rngPinkVol.value);
+    dom.pinkVolLabel.textContent = Math.round(v * 100) + '%';
+    if (state.pinkGain) state.pinkGain.gain.value = v;
+  };
+
+  // Calibration file controls
+  dom.btnLoadCal.onclick = () => dom.fileCal.click();
+  dom.fileCal.onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const txt = await f.text();
+      const parsed = parseImm6cCalFile(txt, f.name);
+      state.calFileName = parsed.fileName;
+      state.calSensitivity = parsed.sensitivity;
+      state.calOffsets = new Float32Array(parsed.offsets);
+      state.calEnabled = true;
+      state.calOverlay = true;
+      saveCalStorage({ ...parsed, enabled: true, overlay: true });
+      renderCalStatusUI();
+      alert(`보정 파일 적용 완료 (${parsed.pointCount}개 포인트, 브라우저 영구 저장됨)`);
+    } catch (err) {
+      alert('보정 파일 파싱 오류: ' + err.message);
+    }
+    dom.fileCal.value = '';
+  };
+  dom.btnToggleCal.onclick = () => {
+    if (!state.calOffsets) return;
+    state.calEnabled = !state.calEnabled;
+    saveCalStorage({ fileName: state.calFileName, sensitivity: state.calSensitivity, offsets: Array.from(state.calOffsets), enabled: state.calEnabled, overlay: state.calOverlay });
+    renderCalStatusUI();
+  };
+  dom.btnToggleCalOverlay.onclick = () => {
+    if (!state.calOffsets) return;
+    state.calOverlay = !state.calOverlay;
+    saveCalStorage({ fileName: state.calFileName, sensitivity: state.calSensitivity, offsets: Array.from(state.calOffsets), enabled: state.calEnabled, overlay: state.calOverlay });
+    renderCalStatusUI();
+  };
+  dom.btnClearCal.onclick = () => {
+    state.calFileName = '';
+    state.calSensitivity = null;
+    state.calOffsets = null;
+    state.calEnabled = false;
+    state.calOverlay = false;
+    saveCalStorage(null);
+    renderCalStatusUI();
+  };
+  dom.btnTips.onclick = () => dom.tipsBox.classList.toggle('open');
+
+  // Presets
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.preset = btn.dataset.preset;
+      recomputeBestMap();
+      updateDetectBtnLabel();
+      renderHistory();
+    };
+  });
+
+  // Segmented options
+  dom.modeGroup.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      dom.modeGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.mode = btn.dataset.mode;
+      recomputeBestMap();
+      renderHistory();
+    };
+  });
+  dom.durGroup.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      dom.durGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.durationMs = Number(btn.dataset.dur);
+      updateDetectBtnLabel();
+    };
+  });
+  dom.cmpGroup.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      dom.cmpGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.compareTarget = btn.dataset.cmp;
+      updateDetectBtnLabel();
+    };
+  });
+
+  // Big Detect button: when clicking after a previous comparison, promote latest currId to refId if compareTarget === 'prev'
+  dom.btnDetect.onclick = () => {
+    if (state.compareTarget === 'prev' && state.currId) {
+      state.refId = state.currId;
+      state.currId = null;
+    }
+    startCapture();
+  };
+
+  // Discard latest capture and keep previous reference
+  dom.btnDiscard.onclick = () => {
+    if (!state.currId) return;
+    state.history = state.history.filter(h => h.id !== state.currId);
+    state.currId = null;
+    recomputeBestMap();
+    const refItem = findItem(state.refId);
+    if (refItem) renderVerdictBaseline(refItem);
+    updateDetectBtnLabel();
+    renderHistory();
+  };
+
+  // JSON Export / Import / Clear
+  dom.btnExport.onclick = () => {
+    if (!state.history.length) { alert('저장할 측정 이력이 없습니다.'); return; }
+    const payload = {
+      app: 'HELIX DSP MINI Phase Analyzer (iMM-6C Edition)',
+      exportedAt: new Date().toISOString(),
+      preset: state.preset,
+      mode: state.mode,
+      refId: state.refId,
+      currId: state.currId,
+      history: state.history
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `helix_phase_session_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  dom.btnImport.onclick = () => dom.fileImport.click();
+  dom.fileImport.onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!Array.isArray(data.history)) throw new Error('올바른 세션 JSON 형식이 아닙니다.');
+      state.history = data.history;
+      state.refId = data.refId ?? (state.history[0]?.id ?? null);
+      state.currId = data.currId ?? null;
+      recomputeBestMap();
+      updateDetectBtnLabel();
+      renderHistory();
+      alert(`${state.history.length}개의 측정 이력을 불러왔습니다.`);
+    } catch (err) {
+      alert('JSON 불러오기 실패: ' + err.message);
+    }
+    dom.fileImport.value = '';
+  };
+  dom.btnClearHist.onclick = () => {
+    if (!state.history.length) return;
+    if (!confirm('모든 측정 이력을 삭제하시겠습니까?')) return;
+    state.history = [];
+    state.refId = null;
+    state.currId = null;
+    state.bestIdByPreset = {};
+    dom.verdictCard.className = 'verdict-card';
+    dom.verdictTitle.textContent = '🎙️ 기준 측정을 대기 중입니다';
+    dom.verdictSub.textContent = '핑크노이즈를 재생한 뒤 [🎯 첫 기준 위상 감지]를 눌러 초기 기준선을 저장하세요.';
+    dom.btnDiscard.style.display = 'none';
+    dom.mDelta.textContent = '-'; dom.mPeakFreq.textContent = '-';
+    dom.mFlatness.textContent = '-'; dom.mDrift.textContent = '-';
+    updateDetectBtnLabel();
+    renderHistory();
+  };
+
+  // Canvas pointer events
+  [dom.rtaCanvas, dom.diffCanvas].forEach(cv => {
+    cv.addEventListener('mousemove', (e) => handlePointer(e.clientX, e.clientY));
+    cv.addEventListener('mouseleave', hideTooltip);
+    cv.addEventListener('touchstart', (e) => {
+      if (e.touches[0]) handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    cv.addEventListener('touchmove', (e) => {
+      if (e.touches[0]) handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    cv.addEventListener('touchend', hideTooltip);
+  });
+
+  // USB hotplug detection
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', refreshDevices);
+  }
+
+  // Init
+  loadCalStorage();
+  refreshDevices();
+  updateDetectBtnLabel();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
